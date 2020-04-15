@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using cw2.Models;
@@ -12,24 +13,65 @@ namespace cw2.Controllers
     [ApiController]
     public class StudentController : ControllerBase
     {
+        string conString = "Data Source=db-mssql;Initial Catalog=s14958;Integrated Security=True";
+
         [HttpGet]
-        public string GetStudents(string orderBy)
+        public IActionResult GetStudents(string orderBy)
         {
-            return $"Kowalski, Nowak, Lewandowski sortowanie={orderBy}";
+            var list = new List<StudentInfoDTO>();
+            using (SqlConnection con = new SqlConnection(conString)) 
+            using(SqlCommand com = new SqlCommand())
+            {
+                com.Connection = con;
+                com.CommandText = "select s.FirstName, s.LastName, s.BirthDate, st.Name, e.Semester from Student s join Enrollment e on e.IdEnrollment = s.IdEnrollment join Studies st on st.IdStudy = e.IdStudy";
+
+                con.Open();
+
+                SqlDataReader dr = com.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    var st = new StudentInfoDTO
+                    {
+                        FirstName = dr["FirstName"].ToString(),
+                        LastName = dr["LastName"].ToString(),
+                        BirthDate = dr["BirthDate"].ToString(),
+                        Name = dr["Name"].ToString(),
+                        Semester = dr["Semester"].ToString()
+                    };
+                    list.Add(st);
+                }
+            }
+            return Ok(list);
         }
 
-        [HttpGet("{id}")]
-        public IActionResult GetStudent(int id)
+        [HttpGet("{indexNumber}")]
+        public IActionResult GetStudent([FromRoute] string indexNumber)
         {
-            if (id == 1)
+            var st = new StudentInfoDTO();
+            using (SqlConnection con = new SqlConnection(conString))
+            using (SqlCommand com = new SqlCommand())
             {
-                return Ok("Kowalski");
-            } else if (id == 2)
-            {
-                return Ok("Malewski");
-            }
+                com.Connection = con;
+                com.CommandText = $"select s.FirstName, s.LastName, s.BirthDate, st.Name, e.Semester from Student s join Enrollment e on e.IdEnrollment = s.IdEnrollment join Studies st on st.IdStudy = e.IdStudy where s.IndexNumber=@indexNumber";
+                com.Parameters.AddWithValue("indexNumber", indexNumber);
+                con.Open();
 
-            return NotFound("Nie znaleziono studenta");
+                SqlDataReader dr = com.ExecuteReader();
+
+                if (dr.Read())
+                {
+                    st.FirstName = dr["FirstName"].ToString();
+                    st.LastName = dr["LastName"].ToString();
+                    st.BirthDate = dr["BirthDate"].ToString();
+                    st.Name = dr["Name"].ToString();
+                    st.Semester = dr["Semester"].ToString();
+                } else
+                {
+                    return NotFound();
+                }
+            }
+            return Ok(st);
         }
 
         [HttpPost]
