@@ -27,19 +27,20 @@ namespace cw2.Controllers
 
                 con.Open();
 
-                SqlDataReader dr = com.ExecuteReader();
-
-                while (dr.Read())
+                using(SqlDataReader dr = com.ExecuteReader())
                 {
-                    var st = new StudentInfoDTO
+                    while (dr.Read())
                     {
-                        FirstName = dr["FirstName"].ToString(),
-                        LastName = dr["LastName"].ToString(),
-                        BirthDate = dr["BirthDate"].ToString(),
-                        Name = dr["Name"].ToString(),
-                        Semester = dr["Semester"].ToString()
-                    };
-                    list.Add(st);
+                        var st = new StudentInfoDTO
+                        {
+                            FirstName = dr["FirstName"].ToString(),
+                            LastName = dr["LastName"].ToString(),
+                            BirthDate = dr["BirthDate"].ToString(),
+                            Name = dr["Name"].ToString(),
+                            Semester = dr["Semester"].ToString()
+                        };
+                        list.Add(st);
+                    }
                 }
             }
             return Ok(list);
@@ -57,18 +58,20 @@ namespace cw2.Controllers
                 com.Parameters.AddWithValue("indexNumber", indexNumber);
                 con.Open();
 
-                SqlDataReader dr = com.ExecuteReader();
-
-                if (dr.Read())
+                using (SqlDataReader dr = com.ExecuteReader())
                 {
-                    st.FirstName = dr["FirstName"].ToString();
-                    st.LastName = dr["LastName"].ToString();
-                    st.BirthDate = dr["BirthDate"].ToString();
-                    st.Name = dr["Name"].ToString();
-                    st.Semester = dr["Semester"].ToString();
-                } else
-                {
-                    return NotFound();
+                    if (dr.Read())
+                    {
+                        st.FirstName = dr["FirstName"].ToString();
+                        st.LastName = dr["LastName"].ToString();
+                        st.BirthDate = dr["BirthDate"].ToString();
+                        st.Name = dr["Name"].ToString();
+                        st.Semester = dr["Semester"].ToString();
+                    }
+                    else
+                    {
+                        return NotFound();
+                    }
                 }
             }
             return Ok(st);
